@@ -86,51 +86,48 @@ func (wp *wsPty) readPump() {
     defer wp.Stop()
 
     for {
-    mt, payload, err := wp.ws.ReadMessage()
-    if err != nil {
-    if err != io.EOF {
-    log.Printf("conn.ReadMessage failed: %s\n", err)
-    return
-    }
-    }
-    var msg Message;
-    switch mt {
-    case websocket.BinaryMessage:
-    log.Printf("Ignoring binary message: %q\n", payload)
-    case websocket.TextMessage:
-    err := json.Unmarshal(payload, &msg);
-    if err != nil{
-    log.Printf("Invalid message %s\n", err);
-    continue
-    }
-    switch msg.Type{
-    case "resize" :
-        var size []float64;
-        err := json.Unmarshal(msg.Data, &size)
-    if err != nil{
-    log.Printf("Invalid resize message: %s\n", err);
-    } else{
-      	wp.Pty.SetSize(uint32(size[0]), uint32(size[1]));
-    }
-
-    case "data" :
-    var dat string;
-    err := json.Unmarshal(msg.Data, &dat);
-    if err != nil{
-    log.Printf("Invalid data message %s\n", err);
-    } else{
-    wp.Pty.StdIn.Write([]byte(dat));
-    }
-
-    default:
-        log.Printf("Invalid message type %d\n", mt)
-            return
-    }
-
-    default:
-    log.Printf("Invalid message type %d\n", mt)
-    return
-    }
+        mt, payload, err := wp.ws.ReadMessage()
+        if err != nil {
+            if err != io.EOF {
+                log.Printf("conn.ReadMessage failed: %s\n", err)
+                return
+            }
+        }
+        var msg Message;
+        switch mt {
+            case websocket.BinaryMessage:
+                log.Printf("Ignoring binary message: %q\n", payload)
+            case websocket.TextMessage:
+                err := json.Unmarshal(payload, &msg)
+                if err != nil {
+                    log.Printf("Invalid message %s\n", err)
+                    continue
+                }
+                switch msg.Type{
+                    case "resize":
+                        var size []float64
+                        err := json.Unmarshal(msg.Data, &size)
+                        if err != nil {
+                            log.Printf("Invalid resize message: %s\n", err)
+                        } else {
+      	                    wp.Pty.SetSize(uint32(size[0]), uint32(size[1]))
+                        }
+                    case "data":
+                        var dat string
+                        err := json.Unmarshal(msg.Data, &dat)
+                        if err != nil {
+                            log.Printf("Invalid data message %s\n", err)
+                        } else {
+                            wp.Pty.StdIn.Write([]byte(dat));
+                        }
+                    default:
+                        log.Printf("Invalid message type %d\n", mt)
+                        return
+                }
+            default:
+                log.Printf("Invalid message type %d\n", mt)
+                return
+        }
     }
 }
 
@@ -141,38 +138,38 @@ func (wp *wsPty) writePump() {
     reader := bufio.NewReader(wp.Pty.StdOut)
     var buffer bytes.Buffer
     for {
-    n, err := reader.Read(buf)
-    if err != nil{
-    log.Printf("Failed to read from pty master: %s", err)
-    return
-    }
-    //read byte array as Unicode code points (rune in go)
-    bufferBytes := buffer.Bytes()
-    runeReader := bufio.NewReader(bytes.NewReader(append(bufferBytes[:],buf[:n]...)))
-    buffer.Reset()
-    i := 0;
-    for i< n{
-    char, charLen, e := runeReader.ReadRune()
-    if e != nil{
-    log.Printf("Failed to read from pty master: %s", err)
-    return
-    }
-    if char == utf8.RuneError {
-    runeReader.UnreadRune()
-    break
-    }
-    i += charLen;
-    buffer.WriteRune(char)
-    }
-    err = wp.ws.WriteMessage(websocket.TextMessage, buffer.Bytes())
-    if err != nil {
-    log.Printf("Failed to send UTF8 char: %s", err)
-    return
-    }
-    buffer.Reset();
-    if i < n{
-    buffer.Write(buf[i:n])
-    }
+        n, err := reader.Read(buf)
+        if err != nil {
+            log.Printf("Failed to read from pty master: %s", err)
+            return
+        }
+        //read byte array as Unicode code points (rune in go)
+        bufferBytes := buffer.Bytes()
+        runeReader := bufio.NewReader(bytes.NewReader(append(bufferBytes[:],buf[:n]...)))
+        buffer.Reset()
+        i := 0
+        for i < n {
+            char, charLen, e := runeReader.ReadRune()
+            if e != nil {
+                log.Printf("Failed to read from pty master: %s", err)
+                return
+            }
+            if char == utf8.RuneError {
+                runeReader.UnreadRune()
+                break
+            }
+            i += charLen
+            buffer.WriteRune(char)
+        }
+        err = wp.ws.WriteMessage(websocket.TextMessage, buffer.Bytes())
+        if err != nil {
+            log.Printf("Failed to send UTF8 char: %s", err)
+            return
+        }
+        buffer.Reset()
+        if i < n {
+            buffer.Write(buf[i:n])
+        }
     }
 }
 
