@@ -93,7 +93,7 @@ func (wp *wsPty) readPump() {
                 return
             }
         }
-        var msg Message;
+        var msg Message
         switch mt {
             case websocket.BinaryMessage:
                 log.Printf("Ignoring binary message: %q\n", payload)
@@ -190,6 +190,6 @@ func main() {
 
     err := http.ListenAndServe(addrFlag, nil)
     if err != nil {
-    log.Fatalf("net.http could not listen on address '%s': %s\n", addrFlag, err)
+        log.Fatalf("net.http could not listen on address '%s': %s\n", addrFlag, err)
     }
 }
