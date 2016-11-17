@@ -9,7 +9,39 @@ const (
 )
 
 var (
-    modWinPTY                           = syscall.NewLazyDLL(`C:\EPOSAPI\winpty.dll`)
+    modWinPTY                           *syscall.LazyDLL
+
+    // Error handling...
+    winpty_error_code                   *syscall.LazyProc
+    winpty_error_msg                    *syscall.LazyProc
+    winpty_error_free                   *syscall.LazyProc
+
+    // Configuration of a new agent.
+    winpty_config_new                   *syscall.LazyProc
+    winpty_config_free                  *syscall.LazyProc
+    winpty_config_set_initial_size      *syscall.LazyProc
+    winpty_config_set_mouse_mode        *syscall.LazyProc
+    winpty_config_set_agent_timeout     *syscall.LazyProc
+
+    // Start the agent.
+    winpty_open                         *syscall.LazyProc
+    winpty_agent_process                *syscall.LazyProc
+
+    // I/O Pipes
+    winpty_conin_name                   *syscall.LazyProc
+    winpty_conout_name                  *syscall.LazyProc
+    winpty_conerr_name                  *syscall.LazyProc
+
+    // Agent RPC Calls
+    winpty_spawn_config_new             *syscall.LazyProc
+    winpty_spawn_config_free            *syscall.LazyProc
+    winpty_spawn                        *syscall.LazyProc
+    winpty_set_size                     *syscall.LazyProc
+    winpty_free                         *syscall.LazyProc
+)
+
+func setupDefines(dllPrefix string){
+    modWinPTY                           = syscall.NewLazyDLL(dllPrefix + `winpty.dll`)
 
     // Error handling...
     winpty_error_code                   = modWinPTY.NewProc("winpty_error_code")
@@ -38,4 +70,4 @@ var (
     winpty_spawn                        = modWinPTY.NewProc("winpty_spawn")
     winpty_set_size                     = modWinPTY.NewProc("winpty_set_size")
     winpty_free                         = modWinPTY.NewProc("winpty_free")
-)
+}

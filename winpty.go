@@ -13,11 +13,15 @@ type WinPTY struct {
 
     wp              uintptr
     childHandle     uintptr
+    closed          bool
 }
 
 // accepts path to command to execute, then arguments.
-// returns stdin, stdout, error
-func Open(cmd string) (*WinPTY, error) {
+// returns WinPTY object pointer, error.
+// remember to call Close on WinPTY object when done.
+func Open(dllPrefix, cmd string) (*WinPTY, error) {
+    setupDefines(dllPrefix)
+
     agentCfg, _, _ := winpty_config_new.Call(uintptr(uint32(0)), uintptr(0))
     if agentCfg == uintptr(0) {
         return nil, fmt.Errorf("Unable to create agent config.")
@@ -78,10 +82,16 @@ func (obj *WinPTY) SetSize(ws_col, ws_row uint32) {
 }
 
 func (obj *WinPTY) Close() {
+    if obj.closed {
+        return
+    }
+
     winpty_free.Call(obj.wp)
 
     obj.StdIn.Close()
     obj.StdOut.Close()
 
     syscall.CloseHandle(syscall.Handle(obj.childHandle))
+
+    obj.closed = true
 }
