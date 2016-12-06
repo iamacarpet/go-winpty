@@ -22,20 +22,22 @@ type WinPTY struct {
 func Open(dllPrefix, cmd string) (*WinPTY, error) {
     setupDefines(dllPrefix)
 
-    agentCfg, _, _ := winpty_config_new.Call(uintptr(uint32(0)), uintptr(0))
+    var errorPtr uintptr
+    defer winpty_error_free.Call(errorPtr)
+    agentCfg, _, _ := winpty_config_new.Call(uintptr(uint32(0)), uintptr(unsafe.Pointer(errorPtr)))
     if agentCfg == uintptr(0) {
-        return nil, fmt.Errorf("Unable to create agent config.")
+        return nil, fmt.Errorf("Unable to create agent config, %s", GetErrorMessage(errorPtr))
     }
     // Set the initial size to 40x40.
     winpty_config_set_initial_size.Call(agentCfg, uintptr(uint32(40)), uintptr(uint32(40)))
 
     var openErr uintptr
+    defer winpty_error_free.Call(openErr)
     wp, _, _ := winpty_open.Call(agentCfg, uintptr(unsafe.Pointer(openErr)))
     if wp == uintptr(0) {
-        return nil, fmt.Errorf("Error creating WinPTY")
+        return nil, fmt.Errorf("Error Launching WinPTY agent, %s", GetErrorMessage(openErr))
     }
     winpty_config_free.Call(agentCfg)
-    winpty_error_free.Call(openErr)
 
     stdin_name, _, _ := winpty_conin_name.Call(wp)
     stdout_name, _, _ := winpty_conout_name.Call(wp)
@@ -94,4 +96,12 @@ func (obj *WinPTY) Close() {
     syscall.CloseHandle(syscall.Handle(obj.childHandle))
 
     obj.closed = true
+}
+
+func GetErrorMessage(ptr uintptr) (string) {
+    msgPtr, _, _ := winpty_error_msg.Call(ptr)
+    if msgPtr == uintptr(0) {
+        return "Unknown Error"
+    }
+    return UTF16PtrToString((*uint16)(unsafe.Pointer(msgPtr)))
 }
