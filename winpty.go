@@ -43,6 +43,21 @@ func Open(dllPrefix, cmd string) (*WinPTY, error) {
 	})
 }
 
+// the same as open, but uses defaults for Env & Dir
+func OpenDefault(dllPrefix, cmd string) (*WinPTY, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get dir on setup: %s", err)
+	}
+
+	return OpenWithOptions(Options{
+		DLLPrefix: dllPrefix,
+		Command:   cmd,
+		Dir:       wd,
+		Env:       os.Environ(),
+	})
+}
+
 func OpenWithOptions(options Options) (*WinPTY, error) {
 	setupDefines(options.DLLPrefix)
 
