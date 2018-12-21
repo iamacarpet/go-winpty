@@ -1,11 +1,13 @@
 package winpty
 
 import (
+	"path/filepath"
 	"syscall"
 )
 
 const (
-	WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN = 1
+	WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN            = 1
+	WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION = 0x8
 )
 
 var (
@@ -46,7 +48,7 @@ func setupDefines(dllPrefix string) {
 		return
 	}
 
-	modWinPTY = syscall.NewLazyDLL(dllPrefix + `winpty.dll`)
+	modWinPTY = syscall.NewLazyDLL(filepath.Join(dllPrefix, `winpty.dll`))
 
 	// Error handling...
 	winpty_error_code = modWinPTY.NewProc("winpty_error_code")

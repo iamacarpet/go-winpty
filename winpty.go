@@ -22,6 +22,13 @@ type Options struct {
 
 	// Env sets the environment variables. Use the format VAR=VAL.
 	Env []string
+
+	// Flags to pass to agent config creation
+	Flags uint32
+
+	// Initial size for Columns and Rows
+	InitialCols uint32
+	InitialRows uint32
 }
 
 type WinPTY struct {
@@ -61,14 +68,21 @@ func OpenDefault(dllPrefix, cmd string) (*WinPTY, error) {
 func OpenWithOptions(options Options) (*WinPTY, error) {
 	setupDefines(options.DLLPrefix)
 
-	agentCfg, err := createAgentCfg(0)
+	// create config with specified Flags
+	agentCfg, err := createAgentCfg(options.Flags)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// Set the initial size to 40x40.
-	winpty_config_set_initial_size.Call(agentCfg, uintptr(uint32(40)), uintptr(uint32(40)))
+	// Set the initial size to 40x40 if options is 0
+	if options.InitialCols <= 0 {
+		options.InitialCols = 40
+	}
+	if options.InitialRows <= 0 {
+		options.InitialRows = 40
+	}
+	winpty_config_set_initial_size.Call(agentCfg, uintptr(options.InitialCols), uintptr(options.InitialRows))
 
 	var openErr uintptr
 	defer winpty_error_free.Call(openErr)
