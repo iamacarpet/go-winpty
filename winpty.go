@@ -152,3 +152,7 @@ func (obj *WinPTY) Close() {
 
 	obj.closed = true
 }
+
+func (obj *WinPTY) GetProcHandle() uintptr {
+	return obj.childHandle
+}
