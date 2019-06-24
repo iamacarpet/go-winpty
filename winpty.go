@@ -119,7 +119,7 @@ func OpenWithOptions(options Options) (*WinPTY, error) {
 		spawnErr  uintptr
 		lastError *uint32
 	)
-	spawnRet, _, _ := winpty_spawn.Call(wp, spawnCfg, uintptr(unsafe.Pointer(obj.childHandle)), uintptr(0), uintptr(unsafe.Pointer(lastError)), uintptr(unsafe.Pointer(spawnErr)))
+	spawnRet, _, _ := winpty_spawn.Call(wp, spawnCfg, uintptr(unsafe.Pointer(&obj.childHandle)), uintptr(0), uintptr(unsafe.Pointer(lastError)), uintptr(unsafe.Pointer(spawnErr)))
 	winpty_spawn_config_free.Call(spawnCfg)
 	defer winpty_error_free.Call(spawnErr)
 
