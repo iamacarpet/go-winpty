@@ -8,6 +8,12 @@ import (
 
 func createAgentCfg(flags uint32) (uintptr, error) {
 	var errorPtr uintptr
+
+	err := winpty_error_free.Find() // check if dll available
+	if err != nil {
+		return uintptr(0), err
+	}
+
 	defer winpty_error_free.Call(errorPtr)
 
 	agentCfg, _, _ := winpty_config_new.Call(
